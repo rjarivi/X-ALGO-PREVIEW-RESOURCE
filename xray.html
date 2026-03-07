@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>X-Algo Preview Resource — Algorithm Intelligence Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #050508;
+    --surface: #0d0d14;
+    --surface2: #12121c;
+    --border: #1e1e2e;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --accent4: #10b981;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glow: 0 0 20px rgba(0,229,255,0.15);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID NOISE BACKGROUND */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top:0; z-index:100;
+    background: rgba(5,5,8,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 2rem;
+    height: 60px;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    display: flex; align-items: center; gap: 0.6rem;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    flex-shrink: 0;
+  }
+
+  .nav-links {
+    display:flex; gap:0.25rem; list-style:none; margin-left:auto;
+  }
+
+  .nav-links li a {
+    display:block; padding:0.4rem 0.9rem;
+    font-size:0.8rem; font-weight:600; letter-spacing:0.05em;
+    color: var(--muted); text-decoration:none; border-radius:6px;
+    text-transform:uppercase; transition: all 0.2s;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .nav-links li a:hover, .nav-links li a.active {
+    color: var(--accent);
+    background: rgba(0,229,255,0.08);
+  }
+
+  /* PAGES */
+  .page { display:none; position:relative; z-index:1; }
+  .page.active { display:block; }
+
+  /* ═══════════════════════════════════
+     SCORE CALCULATOR PAGE
+  ═══════════════════════════════════ */
+  .calc-hero {
+    padding: 3rem 2rem 2rem;
+    max-width: 1200px; margin: 0 auto;
+  }
+
+  .page-badge {
+    display:inline-flex; align-items:center; gap:0.5rem;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    padding: 0.3rem 0.8rem; border-radius:999px;
+    font-size:0.7rem; font-family:'Space Mono',monospace;
+    color:var(--accent); letter-spacing:0.1em; text-transform:uppercase;
+    margin-bottom:1rem;
+  }
+
+  .page-badge .dot {
+    width:6px; height:6px; border-radius:50%;
+    background:var(--accent); animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  h1.hero-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight:800; line-height:1.1;
+    margin-bottom:0.75rem;
+  }
+
+  h1.hero-title span { color:var(--accent); }
+
+  .hero-sub {
+    color:var(--muted); font-size:0.95rem;
+    max-width:600px; line-height:1.6;
+  }
+
+  .calc-layout {
+    display:grid; grid-template-columns:1fr 380px;
+    gap:1.5rem; max-width:1200px; margin:0 auto;
+    padding:0 2rem 3rem;
+  }
+
+  @media(max-width:900px){
+    .calc-layout { grid-template-columns:1fr; }
+  }
+
+  .card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px; padding:1.5rem;
+  }
+
+  .card-title {
+    font-size:0.75rem; font-family:'Space Mono',monospace;
+    color:var(--muted); letter-spacing:0.1em; text-transform:uppercase;
+    margin-bottom:1.25rem; display:flex; align-items:center; gap:0.5rem;
+  }
+
+  .card-title::before {
+    content:''; width:8px; height:8px; border-radius:2px;
+    background:var(--accent);
+  }
+
+  label {
+    display:block; font-size:0.78rem; color:var(--muted);
+    font-family:'Space Mono',monospace; margin-bottom:0.4rem;
+    letter-spacing:0.05em;
+  }
+
+  textarea, select, input[type=range] {
+    width:100%; background:var(--surface2);
+    border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-family:'Space Mono',monospace;
+    font-size:0.85rem; padding:0.75rem;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+
+  textarea:focus, select:focus {
+    outline:none; border-color:var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.1);
+  }
+
+  select { padding:0.6rem 0.75rem; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 0.75rem center;
+  }
+
+  .form-row { margin-bottom:1rem; }
+
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+
+  .toggle-group {
+    display:flex; gap:0.5rem; flex-wrap:wrap;
+  }
+
+  .toggle-btn {
+    padding:0.35rem 0.8rem; border-radius:6px;
+    border:1px solid var(--border); background:var(--surface2);
+    color:var(--muted); font-family:'Space Mono',monospace;
+    font-size:0.75rem; cursor:pointer; transition:all 0.2s;
+  }
+
+  .toggle-btn.active {
+    border-color:var(--accent); background:rgba(0,229,255,0.1);
+    color:var(--accent);
+  }
+
+  .toggle-btn.negative.active {
+    border-color:var(--danger); background:rgba(239,68,68,0.1);
+    color:var(--danger);
+  }
+
+  /* SCORE PANEL */
+  .score-panel { position:sticky; top:80px; }
+
+  .big-score {
+    text-align:center; padding:1.5rem 0;
+  }
+
+  .score-ring {
+    width:140px; height:140px; margin:0 auto 1rem;
+    position:relative;
+  }
+
+  .score-ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+
+  .score-ring .track {
+    fill:none; stroke:var(--border); stroke-width:8;
+  }
+
+  .score-ring .fill {
+    fill:none; stroke:var(--accent); stroke-width:8;
+    stroke-linecap:round;
+    stroke-dasharray:339.3;
+    stroke-dashoffset:339.3;
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1), stroke 0.4s;
+  }
+
+  .score-value {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    transform:rotate(0deg);
+  }
+
+  .score-number {
+    font-size:2.2rem; font-weight:800; color:var(--accent);
+    line-height:1; font-family:'Space Mono',monospace;
+  }
+
+  .score-label { font-size:0.65rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+
+  .vibe-label {
+    font-size:1rem; font-weight:700; margin-bottom:0.25rem;
+  }
+
+  .vibe-sub { font-size:0.75rem; color:var(--muted); font-family:'Space Mono',monospace; }
+
+  /* FACTOR BARS */
+  .factor-list { display:flex; flex-direction:column; gap:0.75rem; }
+
+  .factor-item { }
+
+  .factor-header {
+    display:flex; justify-content:space-between;
+    font-size:0.72rem; font-family:'Space Mono',monospace;
+    margin-bottom:0.3rem;
+  }
+
+  .factor-name { color:var(--muted); }
+  .factor-val { color:var(--text); font-weight:700; }
+  .factor-val.pos { color:var(--accent4); }
+  .factor-val.neg { color:var(--danger); }
+
+  .factor-bar-bg {
+    height:4px; background:var(--border); border-radius:2px; overflow:hidden;
+  }
+
+  .factor-bar-fill {
+    height:100%; border-radius:2px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .factor-bar-fill.pos { background: linear-gradient(90deg, var(--accent4), var(--accent)); }
+  .factor-bar-fill.neg { background: linear-gradient(90deg, var(--danger), #f97316); }
+
+  /* VIBE CHECK */
+  .vibe-bar-wrap {
+    margin-top:1rem;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:1rem;
+  }
+
+  .vibe-bar-track {
+    height:8px; background:var(--border); border-radius:4px; overflow:hidden;
+    margin:0.5rem 0;
+  }
+
+  .vibe-bar-fill {
+    height:100%; border-radius:4px;
+    background: linear-gradient(90deg, var(--danger), var(--accent3), var(--accent4), var(--accent));
+    transition: width 0.4s ease;
+  }
+
+  .vibe-ticks {
+    display:flex; justify-content:space-between;
+    font-size:0.65rem; font-family:'Space Mono',monospace; color:var(--muted);
+  }
+
+  /* ═══════════════════════════════════
+     ALGO DECODER PAGE
+  ═══════════════════════════════════ */
+  .decoder-wrap {
+    max-width:1100px; margin:0 auto; padding:3rem 2rem;
+  }
+
+  .pipeline-viz {
+    display:flex; flex-direction:column; gap:0;
+    margin:2rem 0;
+  }
+
+  .pipeline-stage {
+    display:flex; gap:1.5rem; align-items:stretch;
+    cursor:pointer;
+  }
+
+  .stage-connector {
+    display:flex; flex-direction:column; align-items:center; width:40px;
+    flex-shrink:0;
+  }
+
+  .stage-dot {
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid var(--accent); background:var(--bg);
+    flex-shrink:0; transition: all 0.3s; z-index:1;
+  }
+
+  .pipeline-stage:hover .stage-dot,
+  .pipeline-stage.open .stage-dot {
+    background:var(--accent); box-shadow: 0 0 12px var(--accent);
+  }
+
+  .stage-line {
+    width:2px; flex:1; background:var(--border); min-height:20px;
+  }
+
+  .stage-body {
+    flex:1; padding-bottom:1.5rem;
+  }
+
+  .stage-header {
+    display:flex; align-items:center; gap:1rem;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:1rem 1.25rem;
+    transition: all 0.2s;
+  }
+
+  .pipeline-stage:hover .stage-header,
+  .pipeline-stage.open .stage-header {
+    border-color:var(--accent);
+    background:rgba(0,229,255,0.05);
+  }
+
+  .stage-icon {
+    width:36px; height:36px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; flex-shrink:0;
+  }
+
+  .stage-title { font-weight:700; font-size:0.95rem; }
+  .stage-desc { font-size:0.78rem; color:var(--muted); margin-top:0.1rem; }
+
+  .stage-expand-icon {
+    margin-left:auto; color:var(--muted);
+    transition: transform 0.3s;
+    font-family:'Space Mono',monospace; font-size:0.8rem;
+  }
+
+  .pipeline-stage.open .stage-expand-icon { transform:rotate(180deg); }
+
+  .stage-detail {
+    display:none; padding:1rem 1.25rem;
+    background:var(--surface2); border:1px solid var(--border);
+    border-top:none; border-radius:0 0 10px 10px;
+    margin-top:-10px; padding-top:1.5rem;
+  }
+
+  .pipeline-stage.open .stage-detail { display:block; }
+
+  .detail-grid {
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+    gap:0.75rem; margin-top:0.75rem;
+  }
+
+  .detail-chip {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:0.6rem 0.8rem;
+    font-size:0.75rem; font-family:'Space Mono',monospace;
+  }
+
+  .detail-chip-label { color:var(--muted); font-size:0.65rem; text-transform:uppercase; letter-spacing:0.05em; }
+  .detail-chip-val { color:var(--text); margin-top:0.2rem; }
+
+  /* TWO TOWER VIZ */
+  .two-tower {
+    display:grid; grid-template-columns:1fr auto 1fr;
+    gap:1rem; align-items:center; margin-top:1rem;
+  }
+
+  .tower {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:1rem;
+    text-align:center;
+  }
+
+  .tower-title {
+    font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em;
+    font-family:'Space Mono',monospace; color:var(--muted); margin-bottom:0.5rem;
+  }
+
+  .tower-emoji { font-size:2rem; }
+
+  .tower-feat {
+    display:flex; flex-direction:column; gap:0.3rem; margin-top:0.75rem;
+  }
+
+  .feat-tag {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:4px; padding:0.2rem 0.5rem;
+    font-size:0.65rem; font-family:'Space Mono',monospace; color:var(--muted);
+  }
+
+  .tower-center {
+    text-align:center;
+  }
+
+  .similarity-badge {
+    background: rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.3);
+    border-radius:8px; padding:0.5rem 0.75rem;
+    font-size:0.7rem; font-family:'Space Mono',monospace; color:var(--accent);
+  }
+
+  /* FILTER TABLE */
+  .filter-table {
+    width:100%; border-collapse:collapse; margin-top:0.75rem;
+    font-family:'Space Mono',monospace; font-size:0.75rem;
+  }
+
+  .filter-table th {
+    text-align:left; color:var(--muted); font-weight:400;
+    padding:0.4rem 0.6rem; border-bottom:1px solid var(--border);
+    font-size:0.65rem; text-transform:uppercase; letter-spacing:0.05em;
+  }
+
+  .filter-table td {
+    padding:0.5rem 0.6rem; border-bottom:1px solid rgba(30,30,46,0.5);
+    color:var(--text);
+  }
+
+  .filter-badge {
+    display:inline-block; padding:0.15rem 0.5rem; border-radius:4px;
+    font-size:0.65rem;
+  }
+
+  .filter-badge.pre { background:rgba(124,58,237,0.15); color:#a78bfa; }
+  .filter-badge.post { background:rgba(245,158,11,0.15); color:#fbbf24; }
+
+  /* SCORING FORMULA */
+  .formula-box {
+    background:var(--bg); border:1px solid var(--border);
+    border-radius:10px; padding:1.25rem;
+    font-family:'Space Mono',monospace; font-size:0.8rem;
+    margin-top:0.75rem;
+  }
+
+  .formula-line { margin-bottom:0.5rem; color:var(--muted); }
+  .formula-line span { color:var(--accent); }
+  .formula-line em { color:var(--accent4); font-style:normal; }
+  .formula-line strong { color:var(--danger); }
+
+  /* WEIGHT TABLE */
+  .weight-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-top:0.75rem;
+  }
+
+  .weight-item {
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:0.6rem 0.8rem;
+  }
+
+  .w-action { font-size:0.75rem; font-family:'Space Mono',monospace; color:var(--text); }
+  .w-weight {
+    font-size:0.8rem; font-weight:700; font-family:'Space Mono',monospace;
+  }
+
+  .w-weight.pos { color:var(--accent4); }
+  .w-weight.neg { color:var(--danger); }
+
+  /* ═══════════════════════════════════
+     STRATEGY LAB PAGE
+  ═══════════════════════════════════ */
+  .lab-wrap {
+    max-width:1100px; margin:0 auto; padding:3rem 2rem;
+  }
+
+  .scenario-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr));
+    gap:1rem; margin-top:1.5rem;
+  }
+
+  .scenario-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:1.25rem;
+    cursor:pointer; transition:all 0.2s;
+  }
+
+  .scenario-card:hover {
+    border-color:var(--accent);
+    transform:translateY(-2px);
+    box-shadow: var(--glow);
+  }
+
+  .scenario-card.selected {
+    border-color:var(--accent);
+    background:rgba(0,229,255,0.05);
+  }
+
+  .scenario-icon { font-size:2rem; margin-bottom:0.75rem; }
+  .scenario-title { font-weight:700; font-size:0.95rem; margin-bottom:0.3rem; }
+  .scenario-desc { font-size:0.78rem; color:var(--muted); line-height:1.5; }
+
+  .scenario-result {
+    margin-top:1.5rem; display:none;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:1.5rem;
+  }
+
+  .scenario-result.show { display:block; }
+
+  .result-comparison {
+    display:grid; grid-template-columns:1fr auto 1fr; gap:1rem;
+    align-items:center; margin-top:1rem;
+  }
+
+  .result-side {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:1rem;
+  }
+
+  .result-side-label {
+    font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em;
+    font-family:'Space Mono',monospace; color:var(--muted); margin-bottom:0.5rem;
+  }
+
+  .result-score {
+    font-size:1.8rem; font-weight:800; font-family:'Space Mono',monospace;
+  }
+
+  .result-arrow {
+    font-size:1.5rem; text-align:center; color:var(--accent4);
+  }
+
+  .result-insights {
+    margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem;
+  }
+
+  .insight-item {
+    display:flex; gap:0.75rem; align-items:flex-start;
+    font-size:0.8rem; line-height:1.5;
+  }
+
+  .insight-icon { flex-shrink:0; }
+
+  /* TREND ALIGNMENT */
+  .trend-section { margin-top:2.5rem; }
+
+  .trend-cards {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+    gap:1rem; margin-top:1rem;
+  }
+
+  .trend-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:1.25rem;
+  }
+
+  .trend-layer {
+    font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em;
+    font-family:'Space Mono',monospace; margin-bottom:0.5rem;
+  }
+
+  .trend-layer.thunder { color:#f59e0b; }
+  .trend-layer.phoenix { color:#7c3aed; }
+
+  .trend-title { font-weight:700; margin-bottom:0.5rem; }
+  .trend-tips { display:flex; flex-direction:column; gap:0.35rem; }
+
+  .trend-tip {
+    font-size:0.78rem; color:var(--muted); display:flex; gap:0.5rem;
+    align-items:flex-start;
+  }
+
+  .trend-tip::before { content:'→'; color:var(--accent); flex-shrink:0; }
+
+  /* ═══════════════════════════════════
+     LEARN PAGE
+  ═══════════════════════════════════ */
+  .learn-wrap {
+    max-width:1100px; margin:0 auto; padding:3rem 2rem;
+  }
+
+  .xp-bar-wrap {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:1.25rem; margin-bottom:2rem;
+    display:flex; align-items:center; gap:1.5rem;
+  }
+
+  .xp-avatar {
+    width:56px; height:56px; border-radius:12px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.5rem; flex-shrink:0;
+  }
+
+  .xp-info { flex:1; }
+
+  .xp-name {
+    font-weight:700; font-size:1rem; margin-bottom:0.2rem;
+  }
+
+  .xp-level {
+    font-size:0.7rem; font-family:'Space Mono',monospace;
+    color:var(--accent); margin-bottom:0.5rem;
+  }
+
+  .xp-track { height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+
+  .xp-fill {
+    height:100%; border-radius:4px;
+    background:linear-gradient(90deg, var(--accent2), var(--accent));
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .xp-nums {
+    display:flex; justify-content:space-between;
+    font-size:0.65rem; font-family:'Space Mono',monospace; color:var(--muted);
+    margin-top:0.25rem;
+  }
+
+  .xp-stats { display:flex; gap:1rem; }
+
+  .xp-stat {
+    text-align:center;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:0.5rem 0.75rem; min-width:60px;
+  }
+
+  .xp-stat-val { font-size:1.1rem; font-weight:800; color:var(--accent); font-family:'Space Mono',monospace; }
+  .xp-stat-key { font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
+
+  /* LESSON CARDS */
+  .lessons-grid {
+    display:flex; flex-direction:column; gap:1rem;
+  }
+
+  .lesson-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+    transition: all 0.2s;
+  }
+
+  .lesson-card.locked { opacity:0.5; }
+  .lesson-card.locked .lesson-header { cursor:not-allowed; }
+
+  .lesson-card.completed .lesson-icon-wrap {
+    background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.3);
+  }
+
+  .lesson-header {
+    display:flex; gap:1rem; align-items:center;
+    padding:1.25rem; cursor:pointer;
+    transition: background 0.2s;
+  }
+
+  .lesson-card:not(.locked) .lesson-header:hover {
+    background:rgba(0,229,255,0.03);
+  }
+
+  .lesson-icon-wrap {
+    width:44px; height:44px; border-radius:10px; flex-shrink:0;
+    background:var(--surface2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.3rem;
+  }
+
+  .lesson-info { flex:1; }
+  .lesson-title { font-weight:700; margin-bottom:0.2rem; }
+  .lesson-meta {
+    display:flex; gap:0.75rem; align-items:center;
+    font-size:0.72rem; font-family:'Space Mono',monospace; color:var(--muted);
+  }
+
+  .lesson-xp {
+    color:var(--accent); background:rgba(0,229,255,0.08);
+    border:1px solid rgba(0,229,255,0.2); border-radius:4px;
+    padding:0.1rem 0.4rem;
+  }
+
+  .lesson-status {
+    margin-left:auto; font-size:1.2rem;
+  }
+
+  .lesson-body {
+    display:none; border-top:1px solid var(--border);
+    padding:1.5rem;
+  }
+
+  .lesson-card.open .lesson-body { display:block; }
+
+  .lesson-text {
+    font-size:0.85rem; line-height:1.7; color:var(--muted); margin-bottom:1rem;
+  }
+
+  .lesson-quiz {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:1.25rem;
+  }
+
+  .quiz-q {
+    font-weight:700; font-size:0.9rem; margin-bottom:0.75rem;
+  }
+
+  .quiz-options {
+    display:flex; flex-direction:column; gap:0.5rem;
+  }
+
+  .quiz-opt {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:0.6rem 0.9rem;
+    font-size:0.8rem; cursor:pointer; transition:all 0.2s;
+    font-family:'Space Mono',monospace;
+    display:flex; gap:0.75rem; align-items:center;
+  }
+
+  .quiz-opt:hover:not(.disabled) { border-color:var(--accent); background:rgba(0,229,255,0.05); }
+  .quiz-opt.correct { border-color:var(--accent4); background:rgba(16,185,129,0.1); color:var(--accent4); }
+  .quiz-opt.wrong { border-color:var(--danger); background:rgba(239,68,68,0.1); color:var(--danger); }
+  .quiz-opt.disabled { cursor:default; pointer-events:none; }
+
+  .quiz-feedback {
+    margin-top:0.75rem; font-size:0.8rem; font-family:'Space Mono',monospace;
+    display:none;
+  }
+
+  .quiz-feedback.show { display:block; }
+  .quiz-feedback.correct { color:var(--accent4); }
+  .quiz-feedback.wrong { color:var(--danger); }
+
+  /* ACHIEVEMENT TOAST */
+  .toast {
+    position:fixed; bottom:2rem; right:2rem; z-index:9999;
+    background:var(--surface); border:1px solid var(--accent);
+    border-radius:12px; padding:1rem 1.25rem;
+    display:flex; gap:0.75rem; align-items:center;
+    box-shadow: var(--glow);
+    transform:translateY(100px); opacity:0;
+    transition:all 0.4s cubic-bezier(0.4,0,0.2,1);
+    max-width:320px;
+  }
+
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast-icon { font-size:1.5rem; }
+  .toast-title { font-weight:700; font-size:0.85rem; }
+  .toast-sub { font-size:0.72rem; color:var(--muted); font-family:'Space Mono',monospace; }
+
+  /* MISC */
+  h2 { font-size:1.5rem; font-weight:800; margin-bottom:0.5rem; }
+  h3 { font-size:1.1rem; font-weight:700; }
+
+  .section-title {
+    font-size:0.7rem; text-transform:uppercase; letter-spacing:0.12em;
+    font-family:'Space Mono',monospace; color:var(--muted);
+    margin-bottom:1rem; margin-top:1.5rem;
+  }
+
+  .badge {
+    display:inline-flex; align-items:center; gap:0.3rem;
+    padding:0.2rem 0.6rem; border-radius:999px;
+    font-size:0.65rem; font-family:'Space Mono',monospace; letter-spacing:0.05em;
+  }
+
+  .badge.accent { background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.2); color:var(--accent); }
+  .badge.purple { background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.2); color:#a78bfa; }
+  .badge.amber { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); color:#fbbf24; }
+  .badge.green { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); color:var(--accent4); }
+
+  .char-count { font-size:0.7rem; font-family:'Space Mono',monospace; color:var(--muted); text-align:right; margin-top:0.25rem; }
+  .char-count.warn { color:var(--accent3); }
+  .char-count.over { color:var(--danger); }
+
+  hr { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+
+  .tip-box {
+    background:rgba(0,229,255,0.05); border:1px solid rgba(0,229,255,0.15);
+    border-radius:8px; padding:0.75rem 1rem;
+    font-size:0.8rem; color:var(--muted); line-height:1.5;
+    margin-top:0.75rem;
+  }
+
+  .tip-box strong { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">
+    <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer ring -->
+      <circle cx="16" cy="16" r="14" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.4"/>
+      <!-- Inner circuit board base -->
+      <rect x="8" y="8" width="16" height="16" rx="2" fill="#050508" stroke="#00e5ff" stroke-width="1.2"/>
+      <!-- Horizontal trace lines -->
+      <line x1="8" y1="13" x2="11" y2="13" stroke="#00e5ff" stroke-width="0.9" opacity="0.6"/>
+      <line x1="21" y1="13" x2="24" y2="13" stroke="#00e5ff" stroke-width="0.9" opacity="0.6"/>
+      <line x1="8" y1="19" x2="11" y2="19" stroke="#00e5ff" stroke-width="0.9" opacity="0.6"/>
+      <line x1="21" y1="19" x2="24" y2="19" stroke="#00e5ff" stroke-width="0.9" opacity="0.6"/>
+      <!-- Center node -->
+      <circle cx="16" cy="16" r="3.5" fill="#00e5ff" opacity="0.15"/>
+      <circle cx="16" cy="16" r="1.8" fill="#00e5ff"/>
+      <!-- Vertical trace lines -->
+      <line x1="16" y1="8" x2="16" y2="12.2" stroke="#00e5ff" stroke-width="0.9" opacity="0.6"/>
+      <line x1="16" y1="19.8" x2="16" y2="24" stroke="#00e5ff" stroke-width="0.9" opacity="0.6"/>
+      <!-- Corner nodes -->
+      <circle cx="11" cy="13" r="1" fill="#00e5ff" opacity="0.8"/>
+      <circle cx="21" cy="13" r="1" fill="#00e5ff" opacity="0.8"/>
+      <circle cx="11" cy="19" r="1" fill="#00e5ff" opacity="0.8"/>
+      <circle cx="21" cy="19" r="1" fill="#00e5ff" opacity="0.8"/>
+      <!-- Diagonal accent lines -->
+      <line x1="11" y1="13" x2="14.2" y2="16" stroke="#00e5ff" stroke-width="0.7" opacity="0.5"/>
+      <line x1="21" y1="13" x2="17.8" y2="16" stroke="#00e5ff" stroke-width="0.7" opacity="0.5"/>
+      <line x1="11" y1="19" x2="14.2" y2="16" stroke="#00e5ff" stroke-width="0.7" opacity="0.5"/>
+      <line x1="21" y1="19" x2="17.8" y2="16" stroke="#00e5ff" stroke-width="0.7" opacity="0.5"/>
+    </svg>
+    <span style="line-height:1.1;">X-ALGO<br><span style="font-size:0.6rem;letter-spacing:0.1em;color:var(--muted);font-weight:400;">PREVIEW RESOURCE</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#" class="nav-link active" data-page="calc">Score Calculator</a></li>
+    <li><a href="#" class="nav-link" data-page="decoder">Algo Decoder</a></li>
+    <li><a href="#" class="nav-link" data-page="lab">Strategy Lab</a></li>
+    <li><a href="#" class="nav-link" data-page="learn">Learn</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════════════════════
+     PAGE: SCORE CALCULATOR
+══════════════════════════════ -->
+<div class="page active" id="page-calc">
+  <div class="calc-hero">
+    <div class="page-badge"><span class="dot"></span>Live Simulator</div>
+    <h1 class="hero-title">Post <span>Reach Score</span><br>Calculator</h1>
+    <p class="hero-sub">Simulate how the Phoenix transformer will score your post before you publish. Based on the open-source X algorithm (xai-org/x-algorithm).</p>
+    <div style="margin-top:1rem;display:inline-flex;align-items:flex-start;gap:0.6rem;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.22);border-radius:8px;padding:0.6rem 0.9rem;font-size:0.72rem;font-family:'Space Mono',monospace;color:#f59e0b;max-width:680px;line-height:1.5;">
+      <span style="flex-shrink:0;">⚠️</span>
+      <span><strong>Simulator disclaimer:</strong> Scores are relative estimates for educational purposes only. The repo publishes no inference outputs, specific weight values, or numeric thresholds. Fields marked <strong>*</strong> are simulator extrapolations not explicitly stated in the repo.</span>
+    </div>
+  </div>
+
+  <div class="calc-layout">
+    <!-- LEFT: INPUT -->
+    <div>
+      <div class="card">
+        <div class="card-title">Post Draft</div>
+
+        <div class="form-row">
+          <label>POST TEXT</label>
+          <textarea id="postText" rows="5" placeholder="Draft your post here..."></textarea>
+          <div class="char-count" id="charCount">0 / 280</div>
+        </div>
+
+        <div class="form-row form-grid">
+          <div>
+            <label>MEDIA TYPE</label>
+            <select id="mediaType">
+              <option value="none">No media</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="gif">GIF</option>
+            </select>
+          </div>
+          <div>
+            <label>ACCOUNT TYPE</label>
+            <select id="accountType">
+              <option value="basic">Basic (no check)</option>
+              <option value="verified">Verified (Blue ✓)</option>
+            </select>
+            <div style="margin-top:0.4rem;font-size:0.65rem;font-family:'Space Mono',monospace;color:var(--muted);">* Simulator only — no verification multiplier exists in xai-org/x-algorithm</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>CONTAINS EXTERNAL LINKS</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" data-group="links" data-val="0">No links</button>
+            <button class="toggle-btn" data-group="links" data-val="0">1 link</button>
+            <button class="toggle-btn" data-group="links" data-val="0">2+ links</button>
+          </div>
+          <div style="margin-top:0.5rem;font-size:0.72rem;font-family:'Space Mono',monospace;color:var(--accent3);">
+            ⚠️ The new xai-org/x-algorithm has no hardcoded link penalty — links are not a scored feature in the current repo.
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>POSITIVE SIGNALS (simulate expected engagement — relative impact)</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" data-group="likes" data-val="25">❤️ Favorites</button>
+            <button class="toggle-btn" data-group="reposts" data-val="20">🔁 Reposts</button>
+            <button class="toggle-btn" data-group="replies" data-val="10">💬 Replies</button>
+            <button class="toggle-btn" data-group="quotes" data-val="15">📝 Quote Posts</button>
+          </div>
+          <div style="margin-top:0.5rem;font-size:0.72rem;font-family:'Space Mono',monospace;color:var(--muted);">
+            Relative impact only — exact weight magnitudes are learned by the transformer, not hardcoded in the repo.
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>NEGATIVE SIGNALS (simulate negative engagement)</label>
+          <div class="toggle-group">
+            <button class="toggle-btn negative" data-group="notinterested" data-val="-20">👎 Not Interested</button>
+            <button class="toggle-btn negative" data-group="blocks" data-val="-25">🚫 Block Author</button>
+            <button class="toggle-btn negative" data-group="mutes" data-val="-15">🔇 Mute Author</button>
+            <button class="toggle-btn negative" data-group="reports" data-val="-40">🚨 Reports</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>CONTENT SOURCE (pipeline path)</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" data-group="network" data-val="1.0">⚡ Thunder (In-Network)</button>
+            <button class="toggle-btn" data-group="network" data-val="1.1">🤖 Phoenix (Out-of-Network)</button>
+          </div>
+          <div style="margin-top:0.5rem;font-size:0.72rem;font-family:'Space Mono',monospace;color:var(--muted);">
+            OON content goes through an additional Phoenix retrieval + OON Scorer stage. No specific multiplier is published in the repo.
+          </div>
+        </div>
+
+        <div class="vibe-bar-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.75rem;font-family:'Space Mono',monospace;color:var(--muted);">VIBE CHECK</span>
+            <span id="vibeLabel" style="font-size:0.75rem;font-weight:700;color:var(--muted);">Draft something...</span>
+          </div>
+          <div class="vibe-bar-track">
+            <div class="vibe-bar-fill" id="vibeBar" style="width:0%"></div>
+          </div>
+          <div class="vibe-ticks">
+            <span>☠️ Dead</span><span>😐 Meh</span><span>🙂 Decent</span><span>🔥 Viral</span>
+          </div>
+        </div>
+
+        <div class="tip-box">
+          <strong>💡 Algorithm Insight:</strong> The Phoenix transformer predicts engagement probabilities for many actions — favorites, reposts, replies, video views, follows, and more. Positive actions push the score up; negative actions (not interested, mutes, blocks, reports) push it down. <strong>No hardcoded numeric weights exist in the current repo</strong> — the Grok-based transformer learns all weight magnitudes from engagement data. Reports remain the most severe negative signal based on the repo's Weighted Scorer design.
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SCORE -->
+    <div class="score-panel">
+      <div class="card">
+        <div class="card-title">Reach Score</div>
+        <div class="big-score">
+          <div class="score-ring">
+            <svg viewBox="0 0 120 120">
+              <circle class="track" cx="60" cy="60" r="54"/>
+              <circle class="fill" id="scoreRing" cx="60" cy="60" r="54"/>
+            </svg>
+            <div class="score-value">
+              <div class="score-number" id="scoreNum">0</div>
+              <div class="score-label">/ 100</div>
+            </div>
+          </div>
+          <div class="vibe-label" id="vibeText">Draft a post</div>
+          <div class="vibe-sub" id="vibeSubText">to see your reach score</div>
+        </div>
+
+        <hr style="margin:1rem 0;">
+
+        <div class="card-title">Signal Breakdown <span style="font-size:0.6rem;color:var(--muted);font-weight:400;">* = simulator estimate</span></div>
+        <div class="factor-list" id="factorList">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-title">Phoenix Predictions</div>
+        <div class="factor-list" id="predList">
+          <!-- filled by JS -->
+        </div>
+        <div style="margin-top:0.75rem;font-size:0.65rem;font-family:'Space Mono',monospace;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:0.6rem;">
+          * Action types confirmed in xai-org/x-algorithm README.<br>
+          Probability values are simulator estimates only — the repo publishes no inference outputs.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: ALGO DECODER
+══════════════════════════════ -->
+<div class="page" id="page-decoder">
+  <div class="decoder-wrap">
+    <div class="page-badge"><span class="dot" style="background:var(--accent2)"></span>Architecture</div>
+    <h2>The X Algorithm Pipeline</h2>
+    <p style="color:var(--muted);font-size:0.9rem;max-width:600px;line-height:1.6;margin-bottom:0.5rem;">
+      Every For You feed request flows through these stages. Click each stage to explore how it works. Source: <span style="font-family:'Space Mono',monospace;color:var(--accent);">xai-org/x-algorithm</span>
+    </p>
+
+    <div class="pipeline-viz" id="pipeline">
+
+      <!-- STAGE 1 -->
+      <div class="pipeline-stage" data-stage="1">
+        <div class="stage-connector">
+          <div class="stage-dot"></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-header">
+            <div class="stage-icon" style="background:rgba(0,229,255,0.1);">🔍</div>
+            <div>
+              <div class="stage-title">Query Hydration</div>
+              <div class="stage-desc">Fetch user engagement history & following list</div>
+            </div>
+            <div class="stage-expand-icon">▾</div>
+          </div>
+          <div class="stage-detail">
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">The pipeline begins by loading your <strong style="color:var(--text)">User Action Sequence</strong> — a log of recent engagement history (likes, replies, shares) — and your account metadata (following list, preferences). This becomes the context the Grok-based Phoenix transformer uses to personalize scores.</p>
+            <div class="detail-grid">
+              <div class="detail-chip"><div class="detail-chip-label">Input</div><div class="detail-chip-val">User Action Sequence</div></div>
+              <div class="detail-chip"><div class="detail-chip-label">Input</div><div class="detail-chip-val">User Features (follows, prefs)</div></div>
+              <div class="detail-chip"><div class="detail-chip-label">Output</div><div class="detail-chip-val">Hydrated user context</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 2: CANDIDATE SOURCING -->
+      <div class="pipeline-stage" data-stage="2">
+        <div class="stage-connector">
+          <div class="stage-dot"></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-header">
+            <div class="stage-icon" style="background:rgba(245,158,11,0.1);">⚡</div>
+            <div>
+              <div class="stage-title">Candidate Sourcing — Thunder</div>
+              <div class="stage-desc">In-memory in-network post retrieval from followed accounts</div>
+            </div>
+            <div class="stage-expand-icon">▾</div>
+          </div>
+          <div class="stage-detail">
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">
+              <strong style="color:#fbbf24">Thunder</strong> is an in-memory post store and real-time ingestion pipeline. It consumes post create/delete events from Kafka, maintains per-user stores for original posts, replies/reposts, and video posts, then serves "in-network" candidates from accounts you follow. It enables <strong style="color:var(--text)">sub-millisecond lookups</strong> without hitting an external database — posts older than the retention window are automatically trimmed.
+            </p>
+            <div class="detail-grid">
+              <div class="detail-chip"><div class="detail-chip-label">Source</div><div class="detail-chip-val">Kafka event stream</div></div>
+              <div class="detail-chip"><div class="detail-chip-label">Stores</div><div class="detail-chip-val">Original, replies/reposts, video</div></div>
+              <div class="detail-chip"><div class="detail-chip-label">Speed</div><div class="detail-chip-val">Sub-millisecond lookup</div></div>
+              <div class="detail-chip"><div class="detail-chip-label">Coverage</div><div class="detail-chip-val">In-network only</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 3: PHOENIX RETRIEVAL -->
+      <div class="pipeline-stage" data-stage="3">
+        <div class="stage-connector">
+          <div class="stage-dot"></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-header">
+            <div class="stage-icon" style="background:rgba(124,58,237,0.1);">🤖</div>
+            <div>
+              <div class="stage-title">Candidate Sourcing — Phoenix Retrieval</div>
+              <div class="stage-desc">Two-tower ML model discovers out-of-network posts via similarity search</div>
+            </div>
+            <div class="stage-expand-icon">▾</div>
+          </div>
+          <div class="stage-detail">
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">
+              <strong style="color:#a78bfa">Phoenix</strong> retrieval uses a <strong style="color:var(--text)">Two-Tower model</strong> to find relevant out-of-network posts from the global corpus. The user tower encodes your engagement history; the candidate tower encodes all posts. Top-K posts are retrieved via <strong style="color:var(--text)">dot product similarity</strong> between the two embeddings.
+            </p>
+            <div class="two-tower">
+              <div class="tower">
+                <div class="tower-title">👤 User Tower</div>
+                <div class="tower-feat">
+                  <div class="feat-tag">Engagement history</div>
+                  <div class="feat-tag">Following list</div>
+                  <div class="feat-tag">Account preferences</div>
+                </div>
+              </div>
+              <div class="tower-center">
+                <div class="similarity-badge">dot product<br>similarity<br>→ top-K</div>
+              </div>
+              <div class="tower">
+                <div class="tower-title">📄 Candidate Tower</div>
+                <div class="tower-feat">
+                  <div class="feat-tag">Post text</div>
+                  <div class="feat-tag">Media entities</div>
+                  <div class="feat-tag">Engagement signals</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 4: HYDRATION -->
+      <div class="pipeline-stage" data-stage="4">
+        <div class="stage-connector">
+          <div class="stage-dot"></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-header">
+            <div class="stage-icon" style="background:rgba(16,185,129,0.1);">💧</div>
+            <div>
+              <div class="stage-title">Candidate Hydration</div>
+              <div class="stage-desc">Enrich candidates with metadata, author info, media</div>
+            </div>
+            <div class="stage-expand-icon">▾</div>
+          </div>
+          <div class="stage-detail">
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">Candidates from Thunder and Phoenix are enriched with additional data before scoring. Independent hydrators run in parallel for efficiency.</p>
+            <div class="detail-grid">
+              <div class="detail-chip"><div class="detail-chip-label">Hydrator</div><div class="detail-chip-val">Core post metadata (text, media)</div></div>
+              <div class="detail-chip"><div class="detail-chip-label">Hydrator</div><div class="detail-chip-val">Author info (username, verification)</div></div>
+              <div class="detail-chip"><div class="detail-chip-label">Hydrator</div><div class="detail-chip-val">Video duration</div></div>
+              <div class="detail-chip"><div class="detail-chip-label">Hydrator</div><div class="detail-chip-val">Subscription status</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 5: PRE-SCORING FILTERS -->
+      <div class="pipeline-stage" data-stage="5">
+        <div class="stage-connector">
+          <div class="stage-dot"></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-header">
+            <div class="stage-icon" style="background:rgba(239,68,68,0.1);">🔽</div>
+            <div>
+              <div class="stage-title">Pre-Scoring Filters</div>
+              <div class="stage-desc">Remove ineligible candidates before expensive ML scoring</div>
+            </div>
+            <div class="stage-expand-icon">▾</div>
+          </div>
+          <div class="stage-detail">
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-bottom:0.75rem;">These filters run before the Phoenix transformer to drop posts cheaply — running ML on junk wastes compute.</p>
+            <table class="filter-table">
+              <tr><th>Filter</th><th>Stage</th><th>Purpose</th></tr>
+              <tr><td>DropDuplicatesFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Remove duplicate post IDs</td></tr>
+              <tr><td>CoreDataHydrationFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Drop posts that failed to hydrate</td></tr>
+              <tr><td>AgeFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Remove posts older than threshold</td></tr>
+              <tr><td>SelfpostFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Remove viewer's own posts</td></tr>
+              <tr><td>RepostDeduplicationFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Dedupe reposts of same content</td></tr>
+              <tr><td>IneligibleSubscriptionFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Remove paywalled content</td></tr>
+              <tr><td>PreviouslySeenPostsFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Remove already-seen posts</td></tr>
+              <tr><td>PreviouslyServedPostsFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Remove posts already in session</td></tr>
+              <tr><td>MutedKeywordFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Remove muted keyword matches</td></tr>
+              <tr><td>AuthorSocialgraphFilter</td><td><span class="filter-badge pre">Pre</span></td><td>Remove blocked/muted authors</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 6: SCORING -->
+      <div class="pipeline-stage" data-stage="6">
+        <div class="stage-connector">
+          <div class="stage-dot"></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-header">
+            <div class="stage-icon" style="background:rgba(0,229,255,0.1);">📊</div>
+            <div>
+              <div class="stage-title">Scoring — Phoenix Transformer + Weighted Scorer</div>
+              <div class="stage-desc">Grok-based transformer predicts engagement probabilities; Weighted Scorer combines them</div>
+            </div>
+            <div class="stage-expand-icon">▾</div>
+          </div>
+          <div class="stage-detail">
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">The Phoenix ranking model uses a <strong style="color:var(--text)">Grok-based transformer</strong> (ported from xAI's Grok-1) adapted for recommendation. It uses special <strong style="color:var(--text)">candidate isolation</strong> — candidates cannot attend to each other, only to user context — ensuring scores are consistent and cacheable regardless of what else is in the batch.</p>
+            <div class="formula-box">
+              <div class="formula-line">Final Score = Σ ( <span>weight_i</span> × <em>P(action_i)</em> )</div>
+              <div class="formula-line">where positive actions have <em>positive weights</em></div>
+              <div class="formula-line">and negative actions have <strong>negative weights</strong></div>
+            </div>
+            <div class="weight-grid" style="margin-top:1rem;">
+              <div class="weight-item"><span class="w-action">P(favorite)</span><span class="w-weight pos">+high</span></div>
+              <div class="weight-item"><span class="w-action">P(repost)</span><span class="w-weight pos">+high</span></div>
+              <div class="weight-item"><span class="w-action">P(reply)</span><span class="w-weight pos">+medium</span></div>
+              <div class="weight-item"><span class="w-action">P(quote)</span><span class="w-weight pos">+medium</span></div>
+              <div class="weight-item"><span class="w-action">P(click)</span><span class="w-weight pos">+low</span></div>
+              <div class="weight-item"><span class="w-action">P(video_view)</span><span class="w-weight pos">+medium</span></div>
+              <div class="weight-item"><span class="w-action">P(follow_author)</span><span class="w-weight pos">+high</span></div>
+              <div class="weight-item"><span class="w-action">P(share)</span><span class="w-weight pos">+medium</span></div>
+              <div class="weight-item"><span class="w-action">P(not_interested)</span><span class="w-weight neg">−high</span></div>
+              <div class="weight-item"><span class="w-action">P(block_author)</span><span class="w-weight neg">−high</span></div>
+              <div class="weight-item"><span class="w-action">P(mute_author)</span><span class="w-weight neg">−medium</span></div>
+              <div class="weight-item"><span class="w-action">P(report)</span><span class="w-weight neg">−extreme</span></div>
+            </div>
+            <div class="tip-box" style="margin-top:0.75rem;background:rgba(245,158,11,0.05);border-color:rgba(245,158,11,0.2);">
+              <strong style="color:var(--accent3);">⚠️ Important:</strong> The current <code style="color:var(--accent)">xai-org/x-algorithm</code> repo contains <strong style="color:var(--text)">no hardcoded numeric weights</strong>. The system has eliminated all hand-engineered features. The Grok-based transformer learns weight magnitudes from engagement data. The table above shows relative direction (positive vs. negative) based on the repo's Weighted Scorer design — not exact multipliers. Any source citing specific numbers like "30x for favorites" is referencing the old 2023 <code style="color:var(--muted)">twitter/the-algorithm</code> repo, not this one.
+            </div>
+            <div class="tip-box" style="margin-top:0.5rem;">
+              <strong>Author Diversity Scorer</strong> runs after the Weighted Scorer to attenuate repeated author scores — ensuring no single account dominates the feed.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 7: SELECTION -->
+      <div class="pipeline-stage" data-stage="7">
+        <div class="stage-connector">
+          <div class="stage-dot"></div>
+          <div class="stage-line"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-header">
+            <div class="stage-icon" style="background:rgba(16,185,129,0.1);">🏆</div>
+            <div>
+              <div class="stage-title">Selection</div>
+              <div class="stage-desc">Sort by final score, select top K candidates</div>
+            </div>
+            <div class="stage-expand-icon">▾</div>
+          </div>
+          <div class="stage-detail">
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">Candidates are sorted by their final composite score (after all scorers). The top K candidates advance to post-selection processing. The <strong style="color:var(--text)">ScoredPostsService</strong> (gRPC endpoint) in Home Mixer returns the ranked list.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 8: POST-SELECTION FILTERS -->
+      <div class="pipeline-stage" data-stage="8">
+        <div class="stage-connector">
+          <div class="stage-dot"></div>
+        </div>
+        <div class="stage-body">
+          <div class="stage-header">
+            <div class="stage-icon" style="background:rgba(239,68,68,0.1);">🛡️</div>
+            <div>
+              <div class="stage-title">Post-Selection Filters</div>
+              <div class="stage-desc">Final safety and deduplication pass</div>
+            </div>
+            <div class="stage-expand-icon">▾</div>
+          </div>
+          <div class="stage-detail">
+            <table class="filter-table">
+              <tr><th>Filter</th><th>Stage</th><th>Purpose</th></tr>
+              <tr><td>VFFilter</td><td><span class="filter-badge post">Post</span></td><td>Remove deleted/spam/violence/gore</td></tr>
+              <tr><td>DedupConversationFilter</td><td><span class="filter-badge post">Post</span></td><td>Deduplicate conversation thread branches</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: STRATEGY LAB
+══════════════════════════════ -->
+<div class="page" id="page-lab">
+  <div class="lab-wrap">
+    <div class="page-badge"><span class="dot" style="background:var(--accent3)"></span>What-If Engine</div>
+    <h2>Strategy Lab</h2>
+    <p style="color:var(--muted);font-size:0.9rem;max-width:600px;line-height:1.6;">Run what-if scenarios through the algorithm model. Explore how different post formats change your predicted score.</p>
+
+    <div class="section-title">WHAT-IF SCENARIOS</div>
+    <div class="scenario-grid" id="scenarioGrid">
+
+      <div class="scenario-card" data-scenario="thread-to-video">
+        <div class="scenario-icon">🧵→🎬</div>
+        <div class="scenario-title">Thread → Single Video Post</div>
+        <div class="scenario-desc">You have a 5-post thread. What happens if you collapse it into a single post with a video?</div>
+      </div>
+
+      <div class="scenario-card" data-scenario="link-penalty">
+        <div class="scenario-icon">🔗✅</div>
+        <div class="scenario-title">Links: No Penalty in Current Repo</div>
+        <div class="scenario-desc">The old Twitter algo penalized links. The new xai-org/x-algorithm has no hardcoded link rule — links are not a negative feature in the current scoring system.</div>
+      </div>
+
+      <div class="scenario-card" data-scenario="reply-vs-post">
+        <div class="scenario-icon">💬→📝</div>
+        <div class="scenario-title">Reply → Original Post</div>
+        <div class="scenario-desc">You're replying to a popular post. Compare posting it as a standalone instead.</div>
+      </div>
+
+      <div class="scenario-card" data-scenario="image-upgrade">
+        <div class="scenario-icon">📝→🖼️</div>
+        <div class="scenario-title">Text Only → Add Image</div>
+        <div class="scenario-desc">Adding a high-quality image activates the photo_expand signal in Phoenix scoring.</div>
+      </div>
+
+      <div class="scenario-card" data-scenario="verification-boost">
+        <div class="scenario-icon">☑️🔍</div>
+        <div class="scenario-title">Verification Boost — Myth Check</div>
+        <div class="scenario-desc">Does Blue Check verification actually give a ranking boost? What the xai-org/x-algorithm repo actually says vs. common claims.</div>
+      </div>
+
+      <div class="scenario-card" data-scenario="timing">
+        <div class="scenario-icon">⏱️🎯</div>
+        <div class="scenario-title">Thunder Cache Timing</div>
+        <div class="scenario-desc">Posts enter Thunder's in-memory store immediately. Understand retention windows and freshness.</div>
+      </div>
+
+    </div>
+
+    <div class="scenario-result" id="scenarioResult">
+      <div class="card-title" id="resultTitle">Scenario Result</div>
+      <div class="result-comparison" id="resultComparison"></div>
+      <div class="result-insights" id="resultInsights"></div>
+    </div>
+
+    <!-- TREND ALIGNMENT -->
+    <div class="trend-section">
+      <div class="section-title">PHOENIX SIMILARITY SEARCH — TREND ALIGNMENT TIPS</div>
+      <p style="color:var(--muted);font-size:0.82rem;line-height:1.6;margin-bottom:1rem;">Phoenix retrieval finds you through embedding similarity. Here's how to make your content surface in the Out-of-Network layer.</p>
+
+      <div class="trend-cards">
+        <div class="trend-card">
+          <div class="trend-layer thunder">⚡ Thunder Layer</div>
+          <div class="trend-title">In-Network Optimization</div>
+          <div class="trend-tips">
+            <div class="trend-tip">Post consistently — Thunder's in-memory store rewards recency with sub-millisecond lookups for followers</div>
+            <div class="trend-tip">Engage with followers' replies to strengthen engagement history signals used during Query Hydration</div>
+            <div class="trend-tip">Video posts get a dedicated store in Thunder — separate from text posts</div>
+          </div>
+        </div>
+
+        <div class="trend-card">
+          <div class="trend-layer phoenix">🤖 Phoenix Layer</div>
+          <div class="trend-title">Out-of-Network Discovery</div>
+          <div class="trend-tips">
+            <div class="trend-tip">The Candidate Tower encodes your post into an embedding — rich, specific text creates more distinctive embeddings</div>
+            <div class="trend-tip">Hash-based embeddings power both retrieval and ranking — consistent terminology helps</div>
+            <div class="trend-tip">High engagement density (likes per impression) pushes your post embedding toward high-engagement cluster centroids</div>
+          </div>
+        </div>
+
+        <div class="trend-card">
+          <div class="trend-layer" style="color:var(--accent4);">📊 Weighted Scorer</div>
+          <div class="trend-title">Maximize Your Score</div>
+          <div class="trend-tips">
+            <div class="trend-tip">Favorites and reposts are the highest-weight positive actions — prioritize content that triggers them</div>
+            <div class="trend-tip">P(follow_author) carries high weight — posting content that gains follows boosts your score significantly</div>
+            <div class="trend-tip">Never trigger P(report) — it carries an extreme negative weight, far exceeding all positive signals</div>
+          </div>
+        </div>
+
+        <div class="trend-card">
+          <div class="trend-layer" style="color:var(--danger);">🔽 Filter Avoidance</div>
+          <div class="trend-title">Pass the Filters</div>
+          <div class="trend-tips">
+            <div class="trend-tip">Avoid duplicate content — DropDuplicatesFilter and RepostDeduplicationFilter will remove you</div>
+            <div class="trend-tip">No hardcoded link penalty exists in the current repo — the transformer learns from engagement patterns, not URL presence rules</div>
+            <div class="trend-tip">Fresh content is critical — AgeFilter removes posts beyond the retention threshold</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: LEARN
+══════════════════════════════ -->
+<div class="page" id="page-learn">
+  <div class="learn-wrap">
+    <div class="page-badge"><span class="dot" style="background:var(--accent4)"></span>Gamified Learning</div>
+    <h2>Learn the X Algorithm</h2>
+    <p style="color:var(--muted);font-size:0.9rem;max-width:600px;line-height:1.6;margin-bottom:1.5rem;">Master each component of the open-source algorithm. All content directly from <span style="font-family:'Space Mono',monospace;color:var(--accent);">xai-org/x-algorithm</span>.</p>
+
+    <!-- XP BAR -->
+    <div class="xp-bar-wrap">
+      <div class="xp-avatar">🧠</div>
+      <div class="xp-info">
+        <div class="xp-name" id="playerLevel">Algorithm Novice</div>
+        <div class="xp-level" id="playerXpLabel">Level 1 — 0 / 100 XP</div>
+        <div class="xp-track"><div class="xp-fill" id="xpBar" style="width:0%"></div></div>
+        <div class="xp-nums"><span id="xpCurrent">0 XP</span><span id="xpNext">100 XP to next level</span></div>
+      </div>
+      <div class="xp-stats">
+        <div class="xp-stat">
+          <div class="xp-stat-val" id="statLessons">0</div>
+          <div class="xp-stat-key">Lessons</div>
+        </div>
+        <div class="xp-stat">
+          <div class="xp-stat-val" id="statCorrect">0</div>
+          <div class="xp-stat-key">Correct</div>
+        </div>
+        <div class="xp-stat">
+          <div class="xp-stat-val" id="statStreak">0</div>
+          <div class="xp-stat-key">Streak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSONS -->
+    <div class="lessons-grid" id="lessonsGrid"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toastIcon">🏆</div>
+  <div>
+    <div class="toast-title" id="toastTitle">Achievement Unlocked!</div>
+    <div class="toast-sub" id="toastSub">You earned 25 XP</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════
+const navLinks = document.querySelectorAll('.nav-link');
+const pages = document.querySelectorAll('.page');
+
+navLinks.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const page = link.dataset.page;
+    navLinks.forEach(l => l.classList.remove('active'));
+    pages.forEach(p => p.classList.remove('active'));
+    link.classList.add('active');
+    document.getElementById('page-' + page).classList.add('active');
+  });
+});
+
+// ══════════════════════════════
+//  SCORE CALCULATOR
+// ══════════════════════════════
+const state = {
+  links: 0,
+  likes: 0,
+  reposts: 0,
+  replies: 0,
+  quotes: 0,
+  notinterested: 0,
+  blocks: 0,
+  mutes: 0,
+  reports: 0,
+  network: 1.0,
+  textLen: 0,
+  mediaType: 'none',
+  accountType: 'basic'
+};
+
+// Toggle buttons
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const group = btn.dataset.group;
+    document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state[group] = parseFloat(btn.dataset.val);
+    updateScore();
+  });
+});
+
+document.getElementById('postText').addEventListener('input', e => {
+  const len = e.target.value.length;
+  state.textLen = len;
+  const cc = document.getElementById('charCount');
+  cc.textContent = `${len} / 280`;
+  cc.className = 'char-count' + (len > 280 ? ' over' : len > 240 ? ' warn' : '');
+  updateScore();
+});
+
+document.getElementById('mediaType').addEventListener('change', e => {
+  state.mediaType = e.target.value;
+  updateScore();
+});
+
+document.getElementById('accountType').addEventListener('change', e => {
+  state.accountType = e.target.value;
+  updateScore();
+});
+
+function computeScore() {
+  if (state.textLen === 0) return null;
+
+  // Base engagement score from weighted scorer
+  const engagementScore =
+    state.likes +
+    state.reposts +
+    state.replies +
+    state.quotes +
+    state.notinterested +
+    state.blocks +
+    state.mutes +
+    state.reports;
+
+  // Media bonus
+  let mediaBonus = 0;
+  if (state.mediaType === 'video') mediaBonus = 25;
+  else if (state.mediaType === 'image') mediaBonus = 12;
+  else if (state.mediaType === 'gif') mediaBonus = 8;
+
+  // Text quality heuristic
+  const textScore = Math.min(state.textLen / 280, 1) * 20;
+
+  // No link penalty in current xai-org/x-algorithm — no hand-engineered features
+  const linkPenalty = 0;
+
+  // Network multiplier
+  const networkMult = parseFloat(state.network);
+
+  // Account boost
+  // Verification boost removed — no such multiplier in xai-org/x-algorithm
+  const accountBoost = 0;
+
+  // Combine
+  let raw = (engagementScore + mediaBonus + textScore + linkPenalty + accountBoost) * networkMult;
+
+  // Clamp 0-100
+  return Math.max(0, Math.min(100, raw + 35));
+}
+
+function updateScore() {
+  const score = computeScore();
+  if (score === null) {
+    document.getElementById('scoreNum').textContent = '—';
+    document.getElementById('vibeText').textContent = 'Draft a post';
+    document.getElementById('vibeSubText').textContent = 'to see your reach score';
+    document.getElementById('scoreRing').style.strokeDashoffset = '339.3';
+    document.getElementById('vibeBar').style.width = '0%';
+    document.getElementById('vibeLabel').textContent = 'Draft something...';
+    renderFactors(null);
+    return;
+  }
+
+  const rounded = Math.round(score);
+  document.getElementById('scoreNum').textContent = rounded;
+
+  // Ring
+  const offset = 339.3 - (339.3 * score / 100);
+  const ring = document.getElementById('scoreRing');
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = score > 70 ? '#00e5ff' : score > 40 ? '#f59e0b' : '#ef4444';
+
+  // Vibe text
+  let vibe, vibeS;
+  if (score >= 80) { vibe = '🔥 Viral Potential'; vibeS = 'Phoenix will surface this widely'; }
+  else if (score >= 60) { vibe = '🚀 Strong Reach'; vibeS = 'Good candidate for OON distribution'; }
+  else if (score >= 40) { vibe = '🙂 Decent Reach'; vibeS = 'In-network distribution likely'; }
+  else if (score >= 20) { vibe = '😐 Limited Reach'; vibeS = 'Boost engagement signals'; }
+  else { vibe = '💤 Low Score'; vibeS = 'High negative signals detected'; }
+
+  document.getElementById('vibeText').textContent = vibe;
+  document.getElementById('vibeSubText').textContent = vibeS;
+
+  // Vibe bar
+  document.getElementById('vibeBar').style.width = score + '%';
+  document.getElementById('vibeLabel').textContent = vibe;
+
+  renderFactors(score);
+}
+
+function renderFactors(score) {
+  const fl = document.getElementById('factorList');
+  const pl = document.getElementById('predList');
+
+  if (!score) { fl.innerHTML = ''; pl.innerHTML = ''; return; }
+
+  const mediaBonus = state.mediaType === 'video' ? 25 : state.mediaType === 'image' ? 12 : state.mediaType === 'gif' ? 8 : 0;
+  const textScore = Math.min(state.textLen / 280, 1) * 20;
+  const negScore = state.notinterested + state.blocks + state.mutes + state.reports;
+  const posScore = state.likes + state.reposts + state.replies + state.quotes;
+
+  const factors = [
+    { name: 'Engagement Signals', val: posScore, max: 66, pos: true },
+    { name: 'Media Boost *', val: mediaBonus, max: 25, pos: true },
+    { name: 'Text Quality', val: Math.round(textScore), max: 20, pos: true },
+    { name: 'Negative Signals', val: Math.abs(negScore), max: 80, pos: negScore >= 0 },
+    { name: 'Network Source', val: state.network, max: 1.4, pos: true },
+  ];
+
+  fl.innerHTML = factors.map(f => {
+    const pct = Math.min(Math.abs(f.val) / f.max * 100, 100);
+    const cls = f.pos ? 'pos' : 'neg';
+    return `<div class="factor-item">
+      <div class="factor-header">
+        <span class="factor-name">${f.name}</span>
+        <span class="factor-val ${cls}">${typeof f.val === 'number' && f.val % 1 !== 0 ? f.val.toFixed(1) + 'x' : f.val}</span>
+      </div>
+      <div class="factor-bar-bg">
+        <div class="factor-bar-fill ${cls}" style="width:${pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Phoenix predictions (simulated probabilities)
+  // Phoenix predictions — action types confirmed in repo README
+  // Probability values are simulator estimates, not from repo
+  const preds = [
+    { name: 'P(favorite)', val: Math.min(0.95, posScore > 0 ? 0.3 + posScore/100 : 0.05), pos:true },
+    { name: 'P(repost)', val: Math.min(0.9, state.reposts > 0 ? 0.25 + state.reposts/80 : 0.04), pos:true },
+    { name: 'P(video_view) *', val: state.mediaType === 'video' ? 0.65 : 0.02, pos:true },
+    { name: 'P(not_interested)', val: state.notinterested < 0 ? 0.4 : 0.05, pos:false },
+    { name: 'P(report)', val: state.reports < 0 ? 0.3 : 0.01, pos:false },
+  ];
+
+  pl.innerHTML = preds.map(p => {
+    const pct = p.val * 100;
+    const cls = p.pos ? 'pos' : 'neg';
+    return `<div class="factor-item">
+      <div class="factor-header">
+        <span class="factor-name">${p.name}</span>
+        <span class="factor-val ${cls}">${(p.val * 100).toFixed(1)}%</span>
+      </div>
+      <div class="factor-bar-bg">
+        <div class="factor-bar-fill ${cls}" style="width:${pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════
+//  ALGO DECODER
+// ══════════════════════════════
+document.querySelectorAll('.pipeline-stage').forEach(stage => {
+  stage.querySelector('.stage-header').addEventListener('click', () => {
+    stage.classList.toggle('open');
+  });
+});
+
+// ══════════════════════════════
+//  STRATEGY LAB
+// ══════════════════════════════
+const scenarios = {
+  'thread-to-video': {
+    title: 'Thread → Single Video Post',
+    before: { score: 42, label: '5-Post Thread' },
+    after: { score: 71, label: 'Single Video Post' },
+    insights: [
+      { icon:'🎬', text:'Video activates P(video_view) in Phoenix scoring — a medium-weight positive action.' },
+      { icon:'🔽', text:'Threads spread engagement across 5 posts. A single post concentrates all signals, improving the per-post score.' },
+      { icon:'⚡', text:'Thunder stores video posts in a separate dedicated per-user store for optimized retrieval.' },
+      { icon:'📊', text:'The Author Diversity Scorer attenuates repeated author scores — a single consolidated post avoids the compounding attenuation that multiple sequential posts from the same author would receive.' },
+    ]
+  },
+  'link-penalty': {
+    title: 'Links: What the Current Repo Actually Says',
+    before: { score: 50, label: 'Old Twitter Algo (2023)' },
+    after: { score: 50, label: 'New xai-org/x-algorithm' },
+    insights: [
+      { icon:'✅', text:'The new xai-org/x-algorithm has NO hardcoded link penalty. The old 2023 Twitter algorithm had explicit link suppression rules — those are gone.' },
+      { icon:'🧠', text:'The current system eliminated all hand-engineered features. The Grok-based transformer learns from engagement behavior, not hardcoded URL rules.' },
+      { icon:'📊', text:'If users consistently ignore or bounce from link posts, the transformer will learn that pattern — but this emerges from data, not a hardcoded rule.' },
+      { icon:'⚠️', text:'Any tool or article still citing "−5x for links" or "put links in replies" is referencing the old 2023 codebase, not the current xai-org/x-algorithm repo.' },
+    ]
+  },
+  'reply-vs-post': {
+    title: 'Reply → Original Post',
+    before: { score: 28, label: 'Reply to Popular Post' },
+    after: { score: 55, label: 'Standalone Original Post' },
+    insights: [
+      { icon:'📝', text:'Original posts compete in Phoenix\'s global similarity search. Replies are contextually tied to the parent thread.' },
+      { icon:'🔽', text:'DedupConversationFilter in post-selection can remove multiple branches of the same conversation.' },
+      { icon:'🤖', text:'Phoenix Retrieval\'s two-tower similarity search indexes original posts — standalone content has higher OON discovery potential.' },
+    ]
+  },
+  'image-upgrade': {
+    title: 'Text Only → Add Image',
+    before: { score: 44, label: 'Text-Only Post' },
+    after: { score: 61, label: 'Post with Image' },
+    insights: [
+      { icon:'🖼️', text:'Images activate P(photo_expand) in the Phoenix transformer predictions — a positive-weight action.' },
+      { icon:'📊', text:'Higher dwell time on image posts improves P(dwell) probability — another positive signal.' },
+      { icon:'🎯', text:'The Candidate Tower in Phoenix retrieval also uses media entities as embedding features, improving similarity matching.' },
+    ]
+  },
+  'verification-boost': {
+    title: 'Verification Status — What the Repo Actually Says',
+    before: { score: 50, label: 'Basic Account' },
+    after: { score: 50, label: 'Verified Account' },
+    insights: [
+      { icon:'⚠️', text:'No verification multiplier or Blue Check boost exists in the xai-org/x-algorithm repo. This is a common misconception carried over from the old 2023 twitter/the-algorithm codebase.' },
+      { icon:'✅', text:'What IS confirmed: Author info (including verification status) is hydrated via the Author Info Hydrator and passed as a feature to the Phoenix transformer.' },
+      { icon:'🤖', text:'Whether and how the transformer uses verification as a feature is determined by learning from engagement data — not by a hardcoded multiplier.' },
+      { icon:'📋', text:'The IneligibleSubscriptionFilter may affect subscription-paywalled content eligibility, but this is unrelated to a ranking boost.' },
+    ]
+  },
+  'timing': {
+    title: 'Thunder Cache Timing',
+    before: { score: 35, label: 'Post at Off-Peak Time' },
+    after: { score: 62, label: 'Post at Peak + Fresh' },
+    insights: [
+      { icon:'⚡', text:'Thunder consumes post events from Kafka in real-time. Your post enters the in-memory store immediately.' },
+      { icon:'🕐', text:'AgeFilter removes posts beyond the retention threshold — older posts are dropped before scoring even begins.' },
+      { icon:'🔄', text:'PreviouslyServedPostsFilter removes posts already shown in the current session — post timing affects freshness signals.' },
+      { icon:'📊', text:'Fresh posts in Thunder\'s in-memory store get sub-millisecond lookup priority for in-network candidates.' },
+    ]
+  }
+};
+
+document.querySelectorAll('.scenario-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const key = card.dataset.scenario;
+    const s = scenarios[key];
+
+    document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+
+    const result = document.getElementById('scenarioResult');
+    document.getElementById('resultTitle').textContent = s.title;
+
+    const delta = s.after.score - s.before.score;
+    const deltaColor = delta >= 0 ? 'var(--accent4)' : 'var(--danger)';
+
+    document.getElementById('resultComparison').innerHTML = `
+      <div class="result-side">
+        <div class="result-side-label">Before</div>
+        <div class="result-score" style="color:var(--muted)">${s.before.score}</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem;font-family:'Space Mono',monospace">${s.before.label}</div>
+      </div>
+      <div class="result-arrow">
+        <div style="color:${deltaColor};font-size:1rem;font-family:'Space Mono',monospace;font-weight:700">${delta >= 0 ? '+' : ''}${delta} pts</div>
+        <div>→</div>
+      </div>
+      <div class="result-side">
+        <div class="result-side-label">After</div>
+        <div class="result-score" style="color:${deltaColor}">${s.after.score}</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem;font-family:'Space Mono',monospace">${s.after.label}</div>
+      </div>
+    `;
+
+    document.getElementById('resultInsights').innerHTML = s.insights.map(i => `
+      <div class="insight-item">
+        <span class="insight-icon">${i.icon}</span>
+        <span style="color:var(--muted)">${i.text}</span>
+      </div>
+    `).join('');
+
+    result.classList.add('show');
+    result.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+});
+
+// ══════════════════════════════
+//  LEARN PAGE
+// ══════════════════════════════
+const lessons = [
+  {
+    id:'L1', title:'What is the For You Feed?', icon:'🏠', xp:15,
+    text:`The For You feed on X is powered by a recommendation system that combines two content sources: in-network content from accounts you follow, and out-of-network content discovered through ML-based retrieval. Both sources are ranked together using Phoenix, a Grok-based transformer model that predicts engagement probabilities for each post. The final score is a weighted combination of these predictions. The system has eliminated hand-engineered features — the transformer does all the heavy lifting by understanding your engagement history.`,
+    quiz: {
+      q:'According to the X algorithm repo, what powers the For You feed ranking?',
+      options:['A rule-based scoring system','A Grok-based transformer model called Phoenix','A chronological timeline with boosts','A simple engagement counter'],
+      correct: 1,
+      feedback:'Correct! Phoenix is a Grok-based transformer (ported from Grok-1 by xAI) that predicts engagement probabilities for each candidate post.'
+    }
+  },
+  {
+    id:'L2', title:'Thunder — In-Network Retrieval', icon:'⚡', xp:20,
+    text:`Thunder is an in-memory post store and realtime ingestion pipeline that tracks recent posts from all users. It consumes post create/delete events from Kafka and maintains per-user stores for: original posts, replies/reposts, and video posts. Thunder serves "in-network" candidates from accounts the requesting user follows and automatically trims posts older than the retention period. This enables sub-millisecond lookups without hitting an external database.`,
+    quiz: {
+      q:'What event source does Thunder use to ingest posts?',
+      options:['REST API polling','Direct database reads','Kafka events','gRPC streams'],
+      correct: 2,
+      feedback:'Correct! Thunder consumes post create/delete events from Kafka in real-time, maintaining separate in-memory stores for different post types.'
+    }
+  },
+  {
+    id:'L3', title:'Phoenix — Two-Tower Retrieval', icon:'🤖', xp:25,
+    text:`Phoenix has two main functions. First, retrieval: it finds relevant out-of-network posts using a Two-Tower model. The User Tower encodes user features and engagement history into an embedding. The Candidate Tower encodes all posts into embeddings. Similarity Search then retrieves top-K posts via dot product similarity between these two towers. Second, ranking: the Grok-based transformer predicts engagement probabilities for each candidate.`,
+    quiz: {
+      q:'How does Phoenix Retrieval find out-of-network posts?',
+      options:['By looking at hashtags','By dot product similarity between user and candidate embeddings','By checking follower overlap','By sorting posts by recency'],
+      correct: 1,
+      feedback:'Correct! Phoenix uses a Two-Tower model where user and candidate embeddings are compared via dot product similarity to find relevant out-of-network posts.'
+    }
+  },
+  {
+    id:'L4', title:'Candidate Isolation in Ranking', icon:'🔒', xp:30,
+    text:`A key design decision in the Phoenix ranking model is candidate isolation. During transformer inference, candidates cannot attend to each other — only to the user context. This is enforced via special attention masking. The practical benefit: the score for a post doesn't depend on which other posts are in the same scoring batch. This makes scores consistent and cacheable. You can score 1 post or 1000 posts together and get the same individual scores.`,
+    quiz: {
+      q:'Why does Phoenix use candidate isolation (candidates can\'t attend to each other)?',
+      options:['To save GPU memory','To make scores consistent and cacheable regardless of batch','To prevent duplicate posts','To speed up Kafka ingestion'],
+      correct: 1,
+      feedback:'Correct! Candidate isolation ensures scores are consistent — a post\'s score is the same whether it\'s scored alone or with thousands of others in the same batch.'
+    }
+  },
+  {
+    id:'L5', title:'The Weighted Scorer', icon:'📊', xp:25,
+    text:`After Phoenix predicts probabilities for each action type, the Weighted Scorer combines them into a final score: Final Score = Σ (weight_i × P(action_i)). Positive actions — favorites, reposts, quotes, clicks, video views, photo expands, shares, dwell time, follow author — have positive weights. Negative actions — not_interested flags, block_author, mute_author, and report — have negative weights. Important: the current xai-org/x-algorithm repo has NO hardcoded numeric weights. All hand-engineered features have been eliminated — weight magnitudes are learned by the transformer from engagement data, not set manually. The repo describes the formula structure and which actions are positive vs. negative, but specific multipliers are not published. After the Weighted Scorer, the Author Diversity Scorer attenuates repeated author scores to ensure feed diversity.`,
+    quiz: {
+      q:'What does the current xai-org/x-algorithm repo say about specific weight values in the Weighted Scorer?',
+      options:['Favorites = 30x, Reposts = 20x, Reports = −369x','Exact weights are in a separate config file on GitHub','No hardcoded weights — the transformer learns magnitudes from engagement data','Weights are set by the X engineering team every 4 weeks'],
+      correct: 2,
+      feedback:'Correct! The repo explicitly eliminated all hand-engineered features. The Weighted Scorer formula structure is documented, but specific numeric multipliers are learned by the Grok transformer — not hardcoded in the open-source repo.'
+    }
+  },
+  {
+    id:'L6', title:'Filters: Pre-Scoring & Post-Selection', icon:'🔽', xp:20,
+    text:`The pipeline runs filters at two stages. Pre-Scoring Filters remove candidates before the expensive Phoenix transformer runs: DropDuplicatesFilter, CoreDataHydrationFilter, AgeFilter, SelfpostFilter, RepostDeduplicationFilter, IneligibleSubscriptionFilter, PreviouslySeenPostsFilter, PreviouslyServedPostsFilter, MutedKeywordFilter, and AuthorSocialgraphFilter. Post-Selection Filters run after the top K candidates are chosen: VFFilter removes deleted/spam/violence/gore content, and DedupConversationFilter deduplicates multiple branches of the same conversation thread.`,
+    quiz: {
+      q:'Why do Pre-Scoring Filters run BEFORE the Phoenix transformer?',
+      options:['They are more accurate','Running ML on ineligible posts wastes compute','They require Kafka data','Filters can\'t run after scoring'],
+      correct: 1,
+      feedback:'Correct! Running the expensive Grok-based transformer on posts that would be filtered anyway wastes compute. Pre-scoring filters cheaply eliminate candidates first.'
+    }
+  },
+  {
+    id:'L7', title:'No Hand-Engineered Features', icon:'🧠', xp:35,
+    text:`One of the most significant design decisions in the X algorithm is this: the system has eliminated every single hand-engineered feature and most heuristics. The Grok-based transformer does all the heavy lifting by understanding your engagement history — what you liked, replied to, shared, etc. — and using that to determine what content is relevant to you. This significantly reduces complexity in data pipelines and serving infrastructure. The model learns relevance from engagement sequences entirely on its own.`,
+    quiz: {
+      q:'What does the X algorithm repo state about hand-engineered features?',
+      options:['They are the primary ranking signal','They have been completely eliminated','They apply only to out-of-network content','They power the Thunder retrieval layer'],
+      correct: 1,
+      feedback:'Correct! The repo explicitly states: "We have eliminated every single hand-engineered feature and most heuristics from the system." The transformer learns everything from engagement sequences.'
+    }
+  },
+  {
+    id:'L8', title:'Composable Pipeline Architecture', icon:'🔧', xp:25,
+    text:`A key design decision in the xai-org/x-algorithm is the composable CandidatePipeline framework. It defines clean traits for each pipeline component: Source (fetch candidates), Hydrator (enrich with data), Filter (remove ineligible posts), Scorer (compute scores), Selector (sort and pick top-K), and SideEffect (async caching/logging). The framework runs independent sources and hydrators in parallel with configurable error handling. This separation of pipeline execution from business logic makes it easy to add new sources, filters, and scorers. Home Mixer uses this framework and exposes a gRPC endpoint: ScoredPostsService.`,
+    quiz: {
+      q:'What is the name of the reusable framework that powers the Home Mixer pipeline?',
+      options:['RecommendationEngine','CandidatePipeline','PhoenixFramework','HomeMixerCore'],
+      correct: 1,
+      feedback:'Correct! The CandidatePipeline framework defines traits for Source, Hydrator, Filter, Scorer, Selector, and SideEffect — enabling parallel execution and clean separation of concerns.'
+    }
+  },
+  {
+    id:'L9', title:'Old Repo vs New Repo — What Changed', icon:'⚠️', xp:30,
+    text:`Many X algorithm resources online still reference the old 2023 twitter/the-algorithm codebase. Key differences to know: (1) Old repo had "Heavy Ranker" — new repo uses Phoenix, a Grok-based transformer. (2) Old repo had hardcoded weights like "30x likes, −369x reports" — new repo has ZERO hardcoded weights; the transformer learns all magnitudes. (3) Old repo had params.rs and weighted_scorer.rs with explicit numbers — these files do not exist in the new repo. (4) Old repo used "tweet/retweet" — new repo uses "post/repost". (5) Old repo referenced TweepCred and Social Graph filters as named modules — gone in new repo. (6) Old repo cited "500M posts → 1,500 candidates" and "48M parameters" — the new repo states no such specific numbers.`,
+    quiz: {
+      q:'Which file from the old 2023 Twitter algorithm does NOT exist in the current xai-org/x-algorithm repo?',
+      options:['README.md','params.rs','home-mixer/','phoenix/'],
+      correct: 1,
+      feedback:'Correct! params.rs was part of the old twitter/the-algorithm repo and contained hardcoded weight values. It does not exist in xai-org/x-algorithm — all weights are learned by the transformer, not set in config files.'
+    }
+  },
+];
+
+let xp = 0;
+let lessonsCompleted = 0;
+let correctAnswers = 0;
+let streak = 0;
+let quizzedLessons = new Set();
+
+const LEVELS = [
+  { min:0, name:'Algorithm Novice', next:100 },
+  { min:100, name:'Pipeline Learner', next:250 },
+  { min:250, name:'Thunder Apprentice', next:500 },
+  { min:500, name:'Phoenix Analyst', next:800 },
+  { min:800, name:'Weighted Scorer Pro', next:1200 },
+  { min:1200, name:'Algorithm Master', next:Infinity },
+];
+
+function getLevel(xp) {
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (xp >= LEVELS[i].min) return LEVELS[i];
+  }
+  return LEVELS[0];
+}
+
+function updateXP(gained) {
+  xp += gained;
+  const lv = getLevel(xp);
+  const prevLv = getLevel(xp - gained);
+  document.getElementById('playerLevel').textContent = lv.name;
+  document.getElementById('playerXpLabel').textContent = `${lv.name} — ${xp} XP total`;
+  document.getElementById('xpCurrent').textContent = xp + ' XP';
+  document.getElementById('xpNext').textContent = lv.next === Infinity ? 'Max Level!' : `${lv.next - xp} XP to next level`;
+  const pct = lv.next === Infinity ? 100 : ((xp - lv.min) / (lv.next - lv.min) * 100);
+  document.getElementById('xpBar').style.width = pct + '%';
+  document.getElementById('statLessons').textContent = lessonsCompleted;
+  document.getElementById('statCorrect').textContent = correctAnswers;
+  document.getElementById('statStreak').textContent = streak;
+
+  if (lv.name !== prevLv.name) {
+    showToast('🎉', 'Level Up!', `You are now: ${lv.name}`);
+  }
+}
+
+function showToast(icon, title, sub) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastSub').textContent = sub;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function renderLessons() {
+  const grid = document.getElementById('lessonsGrid');
+  grid.innerHTML = lessons.map((l, i) => {
+    const locked = i > 0 && !quizzedLessons.has(lessons[i-1].id);
+    const completed = quizzedLessons.has(l.id);
+    return `
+    <div class="lesson-card ${locked ? 'locked' : ''} ${completed ? 'completed' : ''}" id="lesson-${l.id}">
+      <div class="lesson-header" onclick="toggleLesson('${l.id}', ${locked})">
+        <div class="lesson-icon-wrap">${l.icon}</div>
+        <div class="lesson-info">
+          <div class="lesson-title">${l.title}</div>
+          <div class="lesson-meta">
+            <span>${locked ? '🔒 Complete previous lesson first' : completed ? '✅ Completed' : '⬜ Not started'}</span>
+            <span class="lesson-xp">+${l.xp} XP</span>
+          </div>
+        </div>
+        <div class="lesson-status">${completed ? '✅' : locked ? '🔒' : '▶️'}</div>
+      </div>
+      <div class="lesson-body">
+        <p class="lesson-text">${l.text}</p>
+        <div class="lesson-quiz" id="quiz-${l.id}">
+          <div class="quiz-q">🧠 ${l.quiz.q}</div>
+          <div class="quiz-options">
+            ${l.quiz.options.map((opt, oi) => `
+              <div class="quiz-opt" onclick="answerQuiz('${l.id}', ${oi})">
+                <span>${['A','B','C','D'][oi]}</span>
+                <span>${opt}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="quiz-feedback" id="feedback-${l.id}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleLesson(id, locked) {
+  if (locked) return;
+  const card = document.getElementById('lesson-' + id);
+  card.classList.toggle('open');
+}
+
+function answerQuiz(lessonId, choiceIdx) {
+  if (quizzedLessons.has(lessonId)) return;
+  const lesson = lessons.find(l => l.id === lessonId);
+  const opts = document.querySelectorAll(`#lesson-${lessonId} .quiz-opt`);
+  const feedback = document.getElementById('feedback-' + lessonId);
+
+  opts.forEach(o => o.classList.add('disabled'));
+
+  const isCorrect = choiceIdx === lesson.quiz.correct;
+  opts[choiceIdx].classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) opts[lesson.quiz.correct].classList.add('correct');
+
+  feedback.textContent = isCorrect ? '✅ ' + lesson.quiz.feedback : '❌ ' + lesson.quiz.feedback;
+  feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'wrong');
+
+  quizzedLessons.add(lessonId);
+  lessonsCompleted++;
+
+  if (isCorrect) {
+    correctAnswers++;
+    streak++;
+    updateXP(lesson.xp);
+    showToast('⚡', `+${lesson.xp} XP earned!`, isCorrect ? 'Correct answer!' : '');
+  } else {
+    streak = 0;
+    updateXP(Math.floor(lesson.xp * 0.25));
+    showToast('📚', `+${Math.floor(lesson.xp * 0.25)} XP (partial)`, 'Review the lesson and try again next time');
+  }
+
+  document.getElementById(`lesson-${lessonId}`).classList.add('completed');
+
+  // Unlock next
+  setTimeout(renderLessons, 800);
+}
+
+renderLessons();
+updateXP(0);
+</script>
+</body>
+</html>
